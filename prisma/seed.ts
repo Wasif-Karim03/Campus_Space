@@ -15,44 +15,72 @@ const prisma = new PrismaClient()
 async function main() {
   console.log("🌱 Starting seed...")
 
-  // Clear existing data (optional - comment out if you want to keep existing data)
-  console.log("🧹 Cleaning existing data...")
-  await prisma.auditLog.deleteMany()
-  await prisma.booking.deleteMany()
-  await prisma.bookingRequest.deleteMany()
-  await prisma.room.deleteMany()
-  await prisma.user.deleteMany()
+  // Check if rooms already exist
+  const existingRooms = await prisma.room.count()
+  const existingUsers = await prisma.user.count()
+  
+  // Only clear if database is empty (first time setup)
+  if (existingRooms === 0 && existingUsers === 0) {
+    console.log("🧹 Cleaning existing data (first time setup)...")
+    await prisma.auditLog.deleteMany()
+    await prisma.booking.deleteMany()
+    await prisma.bookingRequest.deleteMany()
+    await prisma.room.deleteMany()
+    await prisma.user.deleteMany()
+  } else {
+    console.log(`⚠️  Database already has data (${existingRooms} rooms, ${existingUsers} users)`)
+    console.log("📝 Adding new rooms without deleting existing data...")
+    // Only delete rooms that don't exist in our seed data
+    // This allows adding new rooms without losing existing ones
+  }
 
-  // Create users
+  // Create users (only if they don't exist)
   console.log("👥 Creating users...")
-  const admin = await prisma.user.create({
-    data: {
-      name: "Admin User",
-      email: "admin@owu.edu",
-      role: "ADMIN",
-      department: "Administration",
-    },
-  })
+  
+  let admin = await prisma.user.findUnique({ where: { email: "admin@owu.edu" } })
+  if (!admin) {
+    admin = await prisma.user.create({
+      data: {
+        name: "Admin User",
+        email: "admin@owu.edu",
+        role: "ADMIN",
+        department: "Administration",
+      },
+    })
+    console.log(`✅ Created admin user: ${admin.name}`)
+  } else {
+    console.log(`⏭️  Admin user already exists: ${admin.name}`)
+  }
 
-  const faculty = await prisma.user.create({
-    data: {
-      name: "Dr. Jane Smith",
-      email: "jane.smith@owu.edu",
-      role: "FACULTY",
-      department: "Computer Science",
-    },
-  })
+  let faculty = await prisma.user.findUnique({ where: { email: "jane.smith@owu.edu" } })
+  if (!faculty) {
+    faculty = await prisma.user.create({
+      data: {
+        name: "Dr. Jane Smith",
+        email: "jane.smith@owu.edu",
+        role: "FACULTY",
+        department: "Computer Science",
+      },
+    })
+    console.log(`✅ Created faculty user: ${faculty.name}`)
+  } else {
+    console.log(`⏭️  Faculty user already exists: ${faculty.name}`)
+  }
 
-  const student = await prisma.user.create({
-    data: {
-      name: "John Doe",
-      email: "john.doe@owu.edu",
-      role: "STUDENT",
-      department: "Computer Science",
-    },
-  })
-
-  console.log(`✅ Created users: ${admin.name}, ${faculty.name}, ${student.name}`)
+  let student = await prisma.user.findUnique({ where: { email: "john.doe@owu.edu" } })
+  if (!student) {
+    student = await prisma.user.create({
+      data: {
+        name: "John Doe",
+        email: "john.doe@owu.edu",
+        role: "STUDENT",
+        department: "Computer Science",
+      },
+    })
+    console.log(`✅ Created student user: ${student.name}`)
+  } else {
+    console.log(`⏭️  Student user already exists: ${student.name}`)
+  }
 
   // Create rooms for Ohio Wesleyan University buildings
   console.log("🏢 Creating rooms for OWU buildings...")
@@ -200,7 +228,24 @@ async function main() {
   ]
 
   const createdRooms = []
+  let skippedCount = 0
+  
   for (const roomData of rooms) {
+    // Check if room already exists
+    const existingRoom = await prisma.room.findFirst({
+      where: {
+        name: roomData.name,
+        building: roomData.building,
+      },
+    })
+    
+    if (existingRoom) {
+      console.log(`⏭️  Skipping existing room: ${roomData.name} (${roomData.building})`)
+      skippedCount++
+      createdRooms.push(existingRoom)
+      continue
+    }
+    
     const room = await prisma.room.create({
       data: {
         name: roomData.name,
@@ -217,7 +262,11 @@ async function main() {
     console.log(`✅ Created room: ${room.name} (${room.building})`)
   }
 
-  console.log(`✅ Created ${createdRooms.length} rooms across ${new Set(rooms.map(r => r.building)).size} buildings`)
+  const totalRooms = createdRooms.length
+  const totalBuildings = new Set(rooms.map(r => r.building)).size
+  const newRooms = totalRooms - skippedCount
+  
+  console.log(`✅ Rooms summary: ${totalRooms} total (${newRooms} new, ${skippedCount} existing) across ${totalBuildings} buildings`)
 
   // Create some sample booking requests (optional)
   console.log("📅 Creating sample booking requests...")
