@@ -9,6 +9,9 @@ import { redis } from "@/lib/redis"
 const CODE_EXPIRY_SECONDS = 10 * 60 // 10 minutes
 const CODE_KEY_PREFIX = "verification:code:"
 
+// In-memory fallback for development when Redis is not available
+const memoryStore = new Map<string, { data: any; expires: number }>()
+
 /**
  * Generate a random 6-digit verification code
  */
@@ -18,6 +21,7 @@ export function generateVerificationCode(): string {
 
 /**
  * Store verification code in Redis with email and role
+ * Falls back to in-memory storage if Redis is unavailable
  */
 export async function storeVerificationCode(
   email: string,
@@ -27,7 +31,19 @@ export async function storeVerificationCode(
   const key = `${CODE_KEY_PREFIX}${email}`
   const value = JSON.stringify({ code, role, email, createdAt: Date.now() })
   
-  await redis.setex(key, CODE_EXPIRY_SECONDS, value)
+  try {
+    await redis.setex(key, CODE_EXPIRY_SECONDS, value)
+  } catch (error) {
+    // Fallback to in-memory storage if Redis fails
+    console.warn("⚠️ Redis unavailable, using in-memory storage for verification codes")
+    const expires = Date.now() + CODE_EXPIRY_SECONDS * 1000
+    memoryStore.set(key, { data: value, expires })
+    
+    // Clean up expired entries periodically
+    setTimeout(() => {
+      memoryStore.delete(key)
+    }, CODE_EXPIRY_SECONDS * 1000)
+  }
 }
 
 /**
@@ -41,7 +57,21 @@ export async function verifyCode(
   const key = `${CODE_KEY_PREFIX}${email}`
   
   try {
-    const data = await redis.get(key)
+    // Try Redis first
+    let data: string | null = null
+    try {
+      data = await redis.get(key)
+    } catch (error) {
+      // Fallback to in-memory storage
+      const memoryEntry = memoryStore.get(key)
+      if (memoryEntry && memoryEntry.expires > Date.now()) {
+        data = memoryEntry.data
+      } else if (memoryEntry) {
+        // Expired, remove it
+        memoryStore.delete(key)
+      }
+    }
+    
     if (!data) {
       return null // Code expired or doesn't exist
     }
@@ -53,7 +83,12 @@ export async function verifyCode(
     }
     
     // Code is valid, delete it (one-time use)
-    await redis.del(key)
+    try {
+      await redis.del(key)
+    } catch (error) {
+      // Fallback: remove from memory store
+      memoryStore.delete(key)
+    }
     
     return {
       role: parsed.role,
@@ -70,7 +105,13 @@ export async function verifyCode(
  */
 export async function hasPendingCode(email: string): Promise<boolean> {
   const key = `${CODE_KEY_PREFIX}${email}`
-  const exists = await redis.exists(key)
-  return exists === 1
+  try {
+    const exists = await redis.exists(key)
+    return exists === 1
+  } catch (error) {
+    // Fallback to memory store
+    const memoryEntry = memoryStore.get(key)
+    return memoryEntry ? memoryEntry.expires > Date.now() : false
+  }
 }
 

@@ -55,11 +55,21 @@ export async function POST(request: NextRequest) {
       console.error("Error message:", error.message)
       console.error("Error stack:", error.stack)
     }
+    
+    // Provide more helpful error messages
+    let errorMessage = "Failed to send verification code. Please try again."
+    if (error instanceof Error) {
+      if (error.message.includes("ECONNREFUSED") || error.message.includes("connect")) {
+        errorMessage = "Email service temporarily unavailable. Please check your email configuration."
+      } else if (error.message.includes("authentication") || error.message.includes("Invalid login")) {
+        errorMessage = "Email authentication failed. Please check your Gmail credentials."
+      } else {
+        errorMessage = `Failed to send verification code: ${error.message}`
+      }
+    }
+    
     return NextResponse.json(
-      errorResponse(
-        error instanceof Error ? `Failed to send verification code: ${error.message}` : "Failed to send verification code. Please try again.",
-        500
-      ),
+      errorResponse(errorMessage, 500),
       { status: 500 }
     )
   }

@@ -86,8 +86,15 @@ export async function sendEmail(
     })
 
     console.log(`✅ Email sent successfully to ${to}`)
-  } catch (error) {
+  } catch (error: any) {
     console.error("❌ Failed to send email:", error)
+    if (error instanceof Error) {
+      console.error("Error details:", {
+        message: error.message,
+        code: (error as any).code,
+        command: (error as any).command,
+      })
+    }
     // Still log to console as fallback
     console.log("📧 Email Notification (fallback):", {
       to,
@@ -95,7 +102,8 @@ export async function sendEmail(
       body,
       timestamp: new Date().toISOString(),
     })
-    // Don't throw - allow the application to continue even if email fails
+    // Re-throw the error so the API can handle it properly
+    throw new Error(`Failed to send email: ${error instanceof Error ? error.message : "Unknown error"}`)
   }
 }
 
