@@ -16,14 +16,13 @@ export const redis =
     port: parseInt(process.env.REDIS_PORT || "6379"),
     password: process.env.REDIS_PASSWORD,
     
-    // Connection pool configuration
+    // Connection pool configuration - fail fast
     maxRetriesPerRequest: 0,             // Don't retry - fail fast
     retryStrategy: () => null,           // Don't retry - return null to stop retrying
     connectTimeout: 1000,                // Timeout after 1 second
     lazyConnect: true,                   // Don't connect immediately (important for Vercel builds)
     enableOfflineQueue: false,           // Don't queue when disconnected
     enableReadyCheck: false,             // Don't wait for ready state
-    maxRetriesPerRequest: 0,             // No retries - fail immediately
   })
 
 if (process.env.NODE_ENV !== "production") {
