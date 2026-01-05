@@ -38,17 +38,31 @@ Resend is a modern email API that works perfectly with Railway and other cloud p
 
 ---
 
-## Step 3: Add Domain (Optional but Recommended)
+## Step 3: Add Domain (REQUIRED for Production)
 
-For production, you should add your own domain:
+**⚠️ IMPORTANT**: Resend's free tier with `onboarding@resend.dev` only allows sending to your own email address. To send to other recipients (like `mwkarim@owu.edu`), you MUST verify a domain.
+
+### Option A: Verify Your Own Domain (Recommended)
 
 1. Go to **"Domains"** in the Resend dashboard
 2. Click **"+ Add Domain"**
-3. Enter your domain (e.g., `owu.edu` or `campusspace.com`)
-4. Follow the DNS setup instructions
-5. Wait for verification (usually 5-10 minutes)
+3. Enter your domain (e.g., `owu.edu` or a subdomain like `mail.campusspace.com`)
+4. Follow the DNS setup instructions:
+   - Add the DNS records Resend provides to your domain's DNS settings
+   - Wait for verification (usually 5-10 minutes)
+5. Once verified, update `RESEND_FROM_EMAIL` in Railway to use your domain:
+   - Example: `noreply@yourdomain.com` or `noreply@mail.campusspace.com`
 
-**For Quick Testing**: You can use Resend's default domain without verification, but emails might go to spam.
+### Option B: Use a Subdomain (Easier)
+
+If you don't own a domain, you can:
+1. Get a free domain from services like:
+   - Freenom (free domains)
+   - Namecheap (cheap domains ~$1-2/year)
+2. Add it to Resend and verify
+3. Use it as your sender domain
+
+**Note**: Without a verified domain, Resend will only send to the email address you signed up with!
 
 ---
 

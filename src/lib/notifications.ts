@@ -2,12 +2,16 @@
  * Notification System
  * 
  * Handles sending notifications and storing them in the database.
- * Uses Resend (recommended) or Gmail SMTP (fallback) for email delivery.
+ * Email service priority:
+ * 1. SendGrid (easiest - no domain verification needed)
+ * 2. Resend (requires domain verification)
+ * 3. Gmail SMTP (fallback - often blocked on Railway)
  */
 
 import { prisma } from "@/lib/prisma"
 import * as nodemailer from "nodemailer"
 import { Resend } from "resend"
+import sgMail from "@sendgrid/mail"
 
 export type NotificationType =
   | "REQUEST_SUBMITTED"
@@ -26,8 +30,23 @@ export interface NotificationData {
 }
 
 /**
+ * Initialize SendGrid client
+ * SendGrid is the easiest option - no domain verification needed!
+ */
+function initializeSendGrid() {
+  const apiKey = process.env.SENDGRID_API_KEY
+
+  if (!apiKey) {
+    return false
+  }
+
+  sgMail.setApiKey(apiKey)
+  return true
+}
+
+/**
  * Initialize Resend client
- * Resend is recommended for Railway/production environments
+ * Resend requires domain verification for production use
  */
 function createResendClient() {
   const apiKey = process.env.RESEND_API_KEY
@@ -74,17 +93,23 @@ function createTransporter() {
  * Send email notification
  * 
  * Priority:
- * 1. Resend (recommended for Railway/production)
- * 2. Gmail SMTP (fallback)
- * 3. Console logging (if neither is configured)
+ * 1. SendGrid (easiest - no domain verification needed)
+ * 2. Resend (requires domain verification)
+ * 3. Gmail SMTP (fallback - often blocked on Railway)
+ * 4. Console logging (if none configured)
  */
 export async function sendEmail(
   to: string,
   subject: string,
   body: string
 ): Promise<void> {
+  const sendGridEnabled = initializeSendGrid()
   const resend = createResendClient()
   const transporter = createTransporter()
+  
+  // For SendGrid: use verified sender or default
+  const sendGridFromEmail = process.env.SENDGRID_FROM_EMAIL || process.env.GMAIL_EMAIL || "noreply@sendgrid.net"
+  
   // For Resend: use verified domain or default testing email
   // IMPORTANT: Don't use Gmail addresses with Resend - they need to be verified domains
   let resendFromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev"
@@ -96,7 +121,31 @@ export async function sendEmail(
   // For Gmail SMTP: use Gmail email
   const gmailFromEmail = process.env.GMAIL_EMAIL || "noreply@example.com"
 
-  // Try Resend first (recommended for Railway)
+  // Try SendGrid first (easiest - no domain verification needed)
+  if (sendGridEnabled) {
+    try {
+      await sgMail.send({
+        from: sendGridFromEmail,
+        to,
+        subject,
+        text: body,
+        html: `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <p>${body.replace(/\n/g, "<br>")}</p>
+        </div>`,
+      })
+
+      console.log(`✅ Email sent successfully via SendGrid to ${to}`)
+      return
+    } catch (error: any) {
+      console.error("❌ SendGrid failed, trying Resend fallback:", error)
+      if (error.response) {
+        console.error("SendGrid error details:", error.response.body)
+      }
+      // Fall through to Resend
+    }
+  }
+
+  // Try Resend second (requires domain verification)
   if (resend) {
     try {
       const { data, error } = await resend.emails.send({

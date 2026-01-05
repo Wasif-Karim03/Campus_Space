@@ -22,6 +22,7 @@
   "dependencies": {
     "@prisma/client": "^5.19.0",
     "@radix-ui/react-label": "^2.1.8",
+    "@sendgrid/mail": "^8.1.6",
     "@types/nodemailer": "^7.0.4",
     "@upstash/ratelimit": "^2.0.7",
     "@upstash/redis": "^1.36.0",
