@@ -28,8 +28,10 @@ export async function storeVerificationCode(
   role: string,
   code: string
 ): Promise<void> {
-  const key = `${CODE_KEY_PREFIX}${email}`
-  const value = JSON.stringify({ code, role, email, createdAt: Date.now() })
+  // Normalize email to lowercase for consistent storage
+  const normalizedEmail = email.toLowerCase().trim()
+  const key = `${CODE_KEY_PREFIX}${normalizedEmail}`
+  const value = JSON.stringify({ code: code.trim(), role, email: normalizedEmail, createdAt: Date.now() })
   
   // If Redis not available, use in-memory storage directly (no async needed)
   if (!isRedisAvailable) {
@@ -73,7 +75,9 @@ export async function verifyCode(
   email: string,
   code: string
 ): Promise<{ role: string; email: string } | null> {
-  const key = `${CODE_KEY_PREFIX}${email}`
+  // Normalize email to lowercase for consistent lookup
+  const normalizedEmail = email.toLowerCase().trim()
+  const key = `${CODE_KEY_PREFIX}${normalizedEmail}`
   
   try {
     // Try Redis first with timeout (only if Redis is available)
@@ -87,6 +91,7 @@ export async function verifyCode(
           )
         ]) as string | null
       } catch (error) {
+        console.error("Redis get error during verification:", error)
         // Fallback to in-memory storage
       }
     }
@@ -103,12 +108,18 @@ export async function verifyCode(
     }
     
     if (!data) {
+      console.log(`❌ No code found for email: ${normalizedEmail}`)
       return null // Code expired or doesn't exist
     }
     
     const parsed = JSON.parse(data)
     
-    if (parsed.code !== code) {
+    // Compare codes as strings (trim whitespace)
+    const storedCode = String(parsed.code).trim()
+    const providedCode = String(code).trim()
+    
+    if (storedCode !== providedCode) {
+      console.log(`❌ Code mismatch for ${normalizedEmail}. Stored: ${storedCode}, Provided: ${providedCode}`)
       return null // Invalid code
     }
     
