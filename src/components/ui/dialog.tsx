@@ -65,7 +65,7 @@ interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
 }
 
-function DialogContent({ children, className, ...props }: DialogContentProps) {
+function DialogContent({ children, className, onDrag, onDragStart, onDragEnd, ...props }: DialogContentProps) {
   const { open, onOpenChange } = useDialogContext()
 
   return (
@@ -91,7 +91,7 @@ function DialogContent({ children, className, ...props }: DialogContentProps) {
                 className
               )}
               onClick={(e) => e.stopPropagation()}
-              {...props}
+              {...(props as any)}
             >
               <button
                 onClick={() => onOpenChange(false)}
