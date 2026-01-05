@@ -86,7 +86,13 @@ export async function sendEmail(
   const resend = createResendClient()
   const transporter = createTransporter()
   // For Resend: use verified domain or default testing email
-  const resendFromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev"
+  // IMPORTANT: Don't use Gmail addresses with Resend - they need to be verified domains
+  let resendFromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev"
+  // If RESEND_FROM_EMAIL is set to a Gmail address, use default instead
+  if (resendFromEmail.includes("@gmail.com") || resendFromEmail.includes("@googlemail.com")) {
+    console.warn("⚠️ RESEND_FROM_EMAIL cannot be a Gmail address. Using default onboarding@resend.dev")
+    resendFromEmail = "onboarding@resend.dev"
+  }
   // For Gmail SMTP: use Gmail email
   const gmailFromEmail = process.env.GMAIL_EMAIL || "noreply@example.com"
 
