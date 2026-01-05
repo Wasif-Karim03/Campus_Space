@@ -80,6 +80,85 @@ Railway should auto-detect, but verify:
 - **Name**: `GMAIL_APP_PASSWORD`
 - **Value**: `ferpnljadnlcqswk`
 - Click **"Add"**
+- **Note**: Gmail SMTP often has connection issues on Railway. Consider using Resend instead (see Step 3.3 below).
+
+#### Variable 6: RESEND_API_KEY (Recommended - Better than Gmail for Railway)
+- **Name**: `RESEND_API_KEY`
+- **Value**: Get from https://resend.com (see Step 3.3 below)
+- **Note**: Resend is recommended for Railway as it doesn't have SMTP port blocking issues. Free tier: 3,000 emails/month.
+- Click **"Add"** (if using Resend)
+
+#### Variable 7: RESEND_FROM_EMAIL (Optional - if using Resend)
+- **Name**: `RESEND_FROM_EMAIL`
+- **Value**: Your verified email or domain (e.g., `noreply@yourdomain.com`)
+- **Note**: Only needed if using Resend. Can use default `onboarding@resend.dev` for testing.
+- Click **"Add"** (if using Resend)
+
+#### Variable 8: REDIS_URL (Optional - Recommended for Production)
+- **Name**: `REDIS_URL`
+- **Value**: See Step 3.2 below for how to get this
+- **Note**: Redis is **optional**. The app will work without it using in-memory storage for verification codes. However, Redis is recommended for production to handle multiple server instances and better performance.
+- Click **"Add"** (only if setting up Redis)
+
+---
+
+### 3.2 Set Up Redis (Optional but Recommended)
+
+**⚠️ Important**: Redis is **optional**. Your app will work fine without it. However, if you want better performance and to support multiple server instances, follow these steps:
+
+#### Option A: Add Redis Service on Railway (Recommended)
+1. In your Railway project, click **"+ New"**
+2. Select **"Database"** → **"Add Redis"**
+3. Wait 1-2 minutes for Redis to provision
+4. Click on your Redis service
+5. Go to **"Variables"** tab
+6. Find **`REDIS_URL`** - it looks like: `redis://default:password@containers-us-west-xxx.railway.app:6379`
+7. Copy the `REDIS_URL` value
+8. Go back to your **Next.js service** → **"Variables"** tab
+9. Add or update the `REDIS_URL` variable with the value from step 7
+
+#### Option B: Use External Redis Service
+- You can use services like **Upstash** (free tier available) or **Redis Cloud**
+- Get the connection URL from your provider
+- Add it as `REDIS_URL` in your Next.js service variables
+
+#### Option C: Skip Redis (App Will Still Work)
+- **Don't add any Redis variables**
+- The app will use in-memory storage for verification codes
+- This works fine for single-instance deployments
+- **Note**: Verification codes will be lost if the server restarts
+
+**What Redis is used for:**
+- Storing verification codes (with fallback to memory)
+- Caching room availability data (optional)
+- Rate limiting (optional, fails open without Redis)
+
+---
+
+### 3.3 Set Up Resend Email (Recommended for Railway)
+
+**⚠️ Important**: Gmail SMTP often has connection timeout issues on Railway. Resend is recommended as it works reliably on Railway.
+
+**Why Resend?**
+- ✅ Works perfectly on Railway (no SMTP port blocking)
+- ✅ Free tier: 3,000 emails/month
+- ✅ Better deliverability (emails don't go to spam)
+- ✅ Easy setup (just an API key)
+
+**Quick Setup:**
+1. Go to https://resend.com and sign up (free)
+2. Get your API key from the dashboard (starts with `re_`)
+3. Add `RESEND_API_KEY` to your Railway variables (see Variable 6 above)
+4. Optionally add `RESEND_FROM_EMAIL` if you have a verified domain
+5. Redeploy your app
+
+**Detailed Instructions**: See `RESEND_SETUP.md` for complete step-by-step guide.
+
+**Email Service Priority:**
+The app will try in this order:
+1. Resend (if `RESEND_API_KEY` is set) ← Recommended
+2. Gmail SMTP (if Resend fails and Gmail credentials are set)
+3. Console logging (if neither is configured)
 
 ---
 

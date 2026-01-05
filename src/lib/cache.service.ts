@@ -3,7 +3,7 @@
  * Provides caching layer using Redis with fallback to database
  */
 
-import { redis } from "@/lib/redis"
+import { redis, isRedisAvailable } from "@/lib/redis"
 import { CacheKeys, CacheTTL } from "./cache-keys"
 
 export class CacheService {
@@ -11,7 +11,7 @@ export class CacheService {
    * Get value from cache
    */
   async get<T>(key: string): Promise<T | null> {
-    if (!redis) return null // No cache if Redis not available
+    if (!isRedisAvailable) return null // No cache if Redis not available
     
     try {
       const data = await redis.get(key)
@@ -33,7 +33,7 @@ export class CacheService {
     value: any,
     ttl: number = 3600
   ): Promise<void> {
-    if (!redis) return // No cache if Redis not available
+    if (!isRedisAvailable) return // No cache if Redis not available
     try {
       await redis.setex(key, ttl, JSON.stringify(value))
     } catch (error) {
@@ -46,7 +46,7 @@ export class CacheService {
    * Delete a cache key
    */
   async delete(key: string): Promise<void> {
-    if (!redis) return // No cache if Redis not available
+    if (!isRedisAvailable) return // No cache if Redis not available
     
     try {
       await redis.del(key)
@@ -59,7 +59,7 @@ export class CacheService {
    * Invalidate cache by pattern
    */
   async invalidate(pattern: string): Promise<void> {
-    if (!redis) return // No cache if Redis not available
+    if (!isRedisAvailable) return // No cache if Redis not available
     
     try {
       const keys = await redis.keys(pattern)

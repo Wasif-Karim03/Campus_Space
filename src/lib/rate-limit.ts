@@ -3,7 +3,7 @@
  * Simple rate limiter using Redis (sliding window algorithm)
  */
 
-import { redis } from "@/lib/redis"
+import { redis, isRedisAvailable } from "@/lib/redis"
 import { NextResponse } from "next/server"
 
 export interface RateLimitConfig {
@@ -34,7 +34,7 @@ export async function checkRateLimit(
   const windowStart = now - config.window * 1000
 
   // If Redis not available, allow all requests (fail open)
-  if (!redis) {
+  if (!isRedisAvailable) {
     return {
       allowed: true,
       remaining: config.max,

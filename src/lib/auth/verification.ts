@@ -4,7 +4,7 @@
  * Generates, stores, and verifies 6-digit verification codes for email-based login.
  */
 
-import { redis } from "@/lib/redis"
+import { redis, isRedisAvailable } from "@/lib/redis"
 
 const CODE_EXPIRY_SECONDS = 10 * 60 // 10 minutes
 const CODE_KEY_PREFIX = "verification:code:"
@@ -32,7 +32,7 @@ export async function storeVerificationCode(
   const value = JSON.stringify({ code, role, email, createdAt: Date.now() })
   
   // If Redis not available, use in-memory storage directly (no async needed)
-  if (!redis) {
+  if (!isRedisAvailable) {
     const expires = Date.now() + CODE_EXPIRY_SECONDS * 1000
     memoryStore.set(key, { data: value, expires })
     
@@ -78,7 +78,7 @@ export async function verifyCode(
   try {
     // Try Redis first with timeout (only if Redis is available)
     let data: string | null = null
-    if (redis) {
+    if (isRedisAvailable) {
       try {
         data = await Promise.race([
           redis.get(key),
@@ -113,7 +113,7 @@ export async function verifyCode(
     }
     
     // Code is valid, delete it (one-time use)
-    if (redis) {
+    if (isRedisAvailable) {
       try {
         await redis.del(key)
       } catch (error) {
@@ -139,7 +139,7 @@ export async function verifyCode(
  */
 export async function hasPendingCode(email: string): Promise<boolean> {
   const key = `${CODE_KEY_PREFIX}${email}`
-  if (redis) {
+  if (isRedisAvailable) {
     try {
       const exists = await redis.exists(key)
       return exists === 1
