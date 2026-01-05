@@ -85,13 +85,16 @@ export async function sendEmail(
 ): Promise<void> {
   const resend = createResendClient()
   const transporter = createTransporter()
-  const fromEmail = process.env.RESEND_FROM_EMAIL || process.env.GMAIL_EMAIL || "noreply@example.com"
+  // For Resend: use verified domain or default testing email
+  const resendFromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev"
+  // For Gmail SMTP: use Gmail email
+  const gmailFromEmail = process.env.GMAIL_EMAIL || "noreply@example.com"
 
   // Try Resend first (recommended for Railway)
   if (resend) {
     try {
       const { data, error } = await resend.emails.send({
-        from: `Room Booking System <${fromEmail}>`,
+        from: `Room Booking System <${resendFromEmail}>`,
         to: [to],
         subject,
         text: body,
@@ -116,7 +119,7 @@ export async function sendEmail(
   if (transporter) {
     try {
       await transporter.sendMail({
-        from: `"Room Booking System" <${fromEmail}>`,
+        from: `"Room Booking System" <${gmailFromEmail}>`,
         to,
         subject,
         text: body,
