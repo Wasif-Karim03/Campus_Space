@@ -32,13 +32,18 @@ export async function storeVerificationCode(
   const value = JSON.stringify({ code, role, email, createdAt: Date.now() })
   
   try {
-    // Try Redis with timeout
-    await Promise.race([
-      redis.setex(key, CODE_EXPIRY_SECONDS, value),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Redis timeout")), 2000)
-      )
-    ])
+    // Try Redis with timeout (only if Redis is configured)
+    if (process.env.REDIS_HOST && process.env.REDIS_HOST !== "localhost") {
+      await Promise.race([
+        redis.setex(key, CODE_EXPIRY_SECONDS, value),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Redis timeout")), 500)
+        )
+      ])
+    } else {
+      // Skip Redis, use in-memory directly
+      throw new Error("Redis not configured")
+    }
   } catch (error) {
     // Fallback to in-memory storage if Redis fails
     console.warn("⚠️ Redis unavailable, using in-memory storage for verification codes")

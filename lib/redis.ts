@@ -29,9 +29,12 @@ if (process.env.NODE_ENV !== "production") {
   globalForRedis.redis = redis
 }
 
-// Handle connection errors gracefully
+// Handle connection errors gracefully - don't log if Redis is not configured
 redis.on("error", (err) => {
-  console.error("Redis Client Error:", err)
+  // Only log if Redis is explicitly configured (not default localhost)
+  if (process.env.REDIS_HOST && process.env.REDIS_HOST !== "localhost") {
+    console.error("Redis Client Error:", err)
+  }
   // Don't throw - allow fallback to database
 })
 
@@ -39,4 +42,10 @@ redis.on("error", (err) => {
 redis.on("connect", () => {
   console.log("✅ Redis connected")
 })
+
+// Suppress connection attempts if Redis is not configured
+if (!process.env.REDIS_HOST || process.env.REDIS_HOST === "localhost") {
+  // Don't attempt to connect - will use in-memory fallback
+  redis.disconnect()
+}
 
