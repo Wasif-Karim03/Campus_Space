@@ -2,11 +2,9 @@
  * Redis Client Configuration
  * 
  * IMPORTANT: Redis is completely optional.
- * If REDIS_HOST is not explicitly set to a non-localhost value, 
- * this module exports null and NO Redis client is ever created.
+ * If REDIS_HOST is not explicitly set, exports a NO-OP stub.
+ * NO Redis client is created, NO connections attempted.
  */
-
-import Redis from "ioredis"
 
 // Check if Redis should be used - must be explicitly configured
 const REDIS_HOST = process.env.REDIS_HOST?.trim()
@@ -16,9 +14,28 @@ const shouldUseRedis =
   REDIS_HOST !== "localhost" &&
   REDIS_HOST !== "127.0.0.1"
 
-// Export null if Redis should not be used - NO client creation at all
-export const redis: Redis | null = shouldUseRedis ? (() => {
-  // Only create client if explicitly configured
+// Create a NO-OP stub that does nothing (prevents any Redis connection attempts)
+class RedisStub {
+  async get() { return null }
+  async set() { return "OK" }
+  async setex() { return "OK" }
+  async del() { return 0 }
+  async exists() { return 0 }
+  async zcount() { return 0 }
+  async zrange() { return [] }
+  async zadd() { return 0 }
+  async expire() { return 0 }
+  async keys() { return [] }
+  on() { return this } // Event handlers do nothing
+  disconnect() { return Promise.resolve() }
+}
+
+// Export Redis client OR stub
+export const redis: any = shouldUseRedis ? (() => {
+  // Only import and create Redis if explicitly configured
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const Redis = require("ioredis")
+  
   const client = new Redis({
     host: REDIS_HOST!,
     port: parseInt(process.env.REDIS_PORT || "6379"),
@@ -31,7 +48,7 @@ export const redis: Redis | null = shouldUseRedis ? (() => {
     enableReadyCheck: false,
   })
 
-  client.on("error", (err) => {
+  client.on("error", (err: any) => {
     console.error("Redis Client Error:", err)
   })
 
@@ -40,4 +57,4 @@ export const redis: Redis | null = shouldUseRedis ? (() => {
   })
 
   return client
-})() : null
+})() : new RedisStub()
