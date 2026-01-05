@@ -17,15 +17,13 @@ export const redis =
     password: process.env.REDIS_PASSWORD,
     
     // Connection pool configuration
-    maxRetriesPerRequest: 3,
-    retryStrategy: (times) => {
-      const delay = Math.min(times * 50, 2000)
-      return delay
-    },
-    
-    // Performance settings
-    enableOfflineQueue: false,          // Don't queue when disconnected
-    lazyConnect: true,                  // Don't connect immediately (important for Vercel builds)
+    maxRetriesPerRequest: 0,             // Don't retry - fail fast
+    retryStrategy: () => null,           // Don't retry - return null to stop retrying
+    connectTimeout: 1000,                // Timeout after 1 second
+    lazyConnect: true,                   // Don't connect immediately (important for Vercel builds)
+    enableOfflineQueue: false,           // Don't queue when disconnected
+    enableReadyCheck: false,             // Don't wait for ready state
+    maxRetriesPerRequest: 0,             // No retries - fail immediately
   })
 
 if (process.env.NODE_ENV !== "production") {
