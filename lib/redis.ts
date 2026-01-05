@@ -33,8 +33,8 @@ class RedisStub {
 // Export Redis client OR stub
 export const redis: any = shouldUseRedis ? (() => {
   // Only import and create Redis if explicitly configured
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const Redis = require("ioredis")
+  // Using dynamic import to avoid importing ioredis when not needed
+  const Redis = require("ioredis") as typeof import("ioredis").default
   
   const client = new Redis({
     host: REDIS_HOST!,
