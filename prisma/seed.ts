@@ -9,6 +9,8 @@
  */
 
 import { PrismaClient } from "@prisma/client"
+import { cacheService } from "@/src/lib/cache.service"
+import { CacheKeys } from "@/src/lib/cache-keys"
 
 const prisma = new PrismaClient()
 
@@ -302,6 +304,16 @@ async function main() {
       reason: "Database seeded with initial data",
     },
   })
+
+  // Invalidate caches to ensure fresh data is shown
+  console.log("🔄 Invalidating caches...")
+  try {
+    await cacheService.delete(CacheKeys.buildings())
+    await cacheService.invalidate("rooms:list:*")
+    console.log("✅ Caches invalidated")
+  } catch (error) {
+    console.warn("⚠️  Cache invalidation failed (non-critical):", error)
+  }
 
   console.log("✅ Seed completed successfully!")
   console.log("\n📊 Summary:")

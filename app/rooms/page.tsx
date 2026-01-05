@@ -27,7 +27,8 @@ export default function RoomsPage() {
         setLoading(true)
         setError(null)
 
-        const response = await fetch("/api/buildings")
+        // Add noCache parameter to bypass stale cache after seeding
+        const response = await fetch("/api/buildings?noCache=true")
         const result = await response.json()
 
         if (!result.success) {

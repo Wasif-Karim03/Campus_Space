@@ -3,20 +3,24 @@
  * Get list of buildings with room counts
  */
 
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { successResponse, errorResponse } from "@/src/lib/api/response"
 import { cacheService } from "@/src/lib/cache.service"
 import { CacheKeys, CacheTTL } from "@/src/lib/cache-keys"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const cacheKey = CacheKeys.buildings()
+    const searchParams = request.nextUrl.searchParams
+    const bypassCache = searchParams.get("noCache") === "true"
 
-    // Try to get from cache first
-    const cachedBuildings = await cacheService.get<any[]>(cacheKey)
-    if (cachedBuildings) {
-      return NextResponse.json(successResponse(cachedBuildings))
+    // Try to get from cache first (unless bypassing)
+    if (!bypassCache) {
+      const cachedBuildings = await cacheService.get<any[]>(cacheKey)
+      if (cachedBuildings) {
+        return NextResponse.json(successResponse(cachedBuildings))
+      }
     }
 
     // Get all rooms grouped by building
