@@ -7,7 +7,7 @@ import { motion } from "framer-motion"
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
+>(({ className, onDrag, onDragStart, onDragEnd, ...props }, ref) => (
   <motion.div
     initial={{ opacity: 0, y: 4 }}
     animate={{ opacity: 1, y: 0 }}
@@ -26,7 +26,7 @@ const Card = React.forwardRef<
       borderTopColor: "#990000",
       boxShadow: "none",
     }}
-    {...props}
+    {...(props as any)}
   />
 ))
 Card.displayName = "Card"

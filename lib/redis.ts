@@ -26,10 +26,6 @@ export const redis =
     // Performance settings
     enableOfflineQueue: false,          // Don't queue when disconnected
     lazyConnect: true,                  // Don't connect immediately (important for Vercel builds)
-    
-    // Memory optimization
-    maxmemory: "256mb",
-    maxmemoryPolicy: "allkeys-lru",     // LRU eviction policy
   })
 
 if (process.env.NODE_ENV !== "production") {

@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { X, Calendar, Clock, User, FileText, MapPin } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Badge } from "@/src/components/ui/badge"

@@ -193,7 +193,21 @@ export default function CalendarPage() {
   }, [rooms, selectedRoomIds])
 
   const handleBookingClick = (booking: { id: string; roomId: string; startAt: Date | string; endAt: Date | string; purpose: string; status: "APPROVED" | "PENDING"; user: { id?: string; name: string; email: string } }, event: React.MouseEvent) => {
-    setSelectedBooking(booking)
+    // Convert Date objects to strings for Booking type
+    const bookingForState: Booking = {
+      id: booking.id,
+      roomId: booking.roomId,
+      startAt: booking.startAt instanceof Date ? booking.startAt.toISOString() : booking.startAt,
+      endAt: booking.endAt instanceof Date ? booking.endAt.toISOString() : booking.endAt,
+      purpose: booking.purpose,
+      status: booking.status,
+      user: {
+        id: booking.user.id || "",
+        name: booking.user.name,
+        email: booking.user.email,
+      },
+    }
+    setSelectedBooking(bookingForState)
     setPopoverPosition({
       x: event.clientX,
       y: event.clientY,
@@ -348,7 +362,17 @@ export default function CalendarPage() {
 
       {selectedBooking && (
         <BookingDetailPopover
-          booking={selectedBooking}
+          booking={{
+            id: selectedBooking.id,
+            startAt: new Date(selectedBooking.startAt),
+            endAt: new Date(selectedBooking.endAt),
+            purpose: selectedBooking.purpose,
+            status: selectedBooking.status,
+            user: {
+              name: selectedBooking.user.name,
+              email: selectedBooking.user.email,
+            },
+          }}
           isOpen={popoverOpen}
           onClose={() => setPopoverOpen(false)}
           position={popoverPosition}

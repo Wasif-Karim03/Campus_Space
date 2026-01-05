@@ -85,7 +85,7 @@ export function RequestActionModal({
       }
 
       await onSubmit({
-        status: action === "approve" ? "APPROVED" : "REJECTED",
+        status: "REJECTED",
         reason: reason.trim(),
         startAt: modifyTimes ? startAt : undefined,
         endAt: modifyTimes ? endAt : undefined,
@@ -127,7 +127,7 @@ export function RequestActionModal({
               <div className="flex items-center justify-between p-6 border-b">
                 <div>
                   <h2 className="text-2xl font-semibold">
-                    {action === "approve" ? "Approve" : "Reject"} Request
+                    Reject Request
                   </h2>
                   <p className="text-sm text-muted-foreground mt-1">
                     {request.room.name} • {request.room.building}
@@ -219,7 +219,7 @@ export function RequestActionModal({
                   <textarea
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
-                    placeholder={`Explain why you're ${action === "approve" ? "approving" : "rejecting"} this request...`}
+                    placeholder="Explain why you're rejecting this request..."
                     className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     required
                     minLength={10}
@@ -246,13 +246,11 @@ export function RequestActionModal({
                   </Button>
                   <Button
                     type="submit"
-                    variant={action === "approve" ? "default" : "destructive"}
+                    variant="destructive"
                     disabled={loading || reason.trim().length < 10}
                   >
                     {loading
                       ? "Processing..."
-                      : action === "approve"
-                      ? "Approve Request"
                       : "Reject Request"}
                   </Button>
                 </div>

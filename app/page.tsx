@@ -5,7 +5,8 @@ import { Button } from "@/src/components/ui/button"
 import { Building2, Calendar, Users, Shield, ArrowRight, Check, Sparkles } from "lucide-react"
 import { Card, CardContent } from "@/src/components/ui/card"
 import { motion } from "framer-motion"
-import { FadeIn, SlideUp } from "@/src/components/motion/fade-in"
+import { FadeIn } from "@/src/components/motion/fade-in"
+import { SlideUp } from "@/src/components/motion/slide-up"
 
 const features = [
   {
