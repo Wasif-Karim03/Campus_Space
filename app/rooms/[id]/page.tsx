@@ -169,13 +169,20 @@ export default function RoomDetailPage() {
 
       addToast("Room booked successfully!", "success")
       
-      // Refresh availability to show the new booking
+      // Refresh availability to show the new booking (bypass cache to get fresh data)
+      const dateStr = data.startAt.toISOString().split("T")[0]
       const availabilityResponse = await fetch(
-        `/api/rooms/${roomId}/availability?date=${data.startAt.toISOString().split("T")[0]}`
+        `/api/rooms/${roomId}/availability?date=${dateStr}&noCache=true`
       )
       const availabilityResult = await availabilityResponse.json()
       if (availabilityResult.success) {
         setAvailability(availabilityResult.data)
+      }
+      
+      // Also refresh the selected date if it matches
+      if (selectedDate === dateStr) {
+        // Force a re-fetch by updating the date slightly
+        setSelectedDate(dateStr)
       }
       
       router.refresh()

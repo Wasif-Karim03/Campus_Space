@@ -38,10 +38,16 @@ export async function GET(
     // Create cache key (availability is cached per room per date)
     const cacheKey = CacheKeys.availability(id, date)
 
+    // Check if cache should be bypassed (for immediate updates after booking)
+    const bypassCache = searchParams.get("noCache") === "true"
+
     // Try to get from cache first (CRITICAL for performance - this endpoint is hit frequently)
-    const cachedAvailability = await cacheService.get<any>(cacheKey)
-    if (cachedAvailability) {
-      return NextResponse.json(successResponse(cachedAvailability))
+    // Skip cache if bypassCache is true
+    if (!bypassCache) {
+      const cachedAvailability = await cacheService.get<any>(cacheKey)
+      if (cachedAvailability) {
+        return NextResponse.json(successResponse(cachedAvailability))
+      }
     }
 
     // Verify room exists
