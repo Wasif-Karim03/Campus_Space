@@ -50,7 +50,8 @@ export async function requireAdmin() {
  */
 export async function hasRole(role: UserRole): Promise<boolean> {
   const user = await getCurrentUser()
-  return (user?.role === role) ?? false
+  if (!user) return false
+  return user.role === role
 }
 
 /**
