@@ -11,6 +11,8 @@ export class CacheService {
    * Get value from cache
    */
   async get<T>(key: string): Promise<T | null> {
+    if (!redis) return null // No cache if Redis not available
+    
     try {
       const data = await redis.get(key)
       if (!data) return null
@@ -31,6 +33,7 @@ export class CacheService {
     value: any,
     ttl: number = 3600
   ): Promise<void> {
+    if (!redis) return // No cache if Redis not available
     try {
       await redis.setex(key, ttl, JSON.stringify(value))
     } catch (error) {
@@ -43,6 +46,8 @@ export class CacheService {
    * Delete a cache key
    */
   async delete(key: string): Promise<void> {
+    if (!redis) return // No cache if Redis not available
+    
     try {
       await redis.del(key)
     } catch (error) {
@@ -54,6 +59,8 @@ export class CacheService {
    * Invalidate cache by pattern
    */
   async invalidate(pattern: string): Promise<void> {
+    if (!redis) return // No cache if Redis not available
+    
     try {
       const keys = await redis.keys(pattern)
       if (keys.length > 0) {

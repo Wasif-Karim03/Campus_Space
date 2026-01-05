@@ -33,6 +33,15 @@ export async function checkRateLimit(
   const now = Date.now()
   const windowStart = now - config.window * 1000
 
+  // If Redis not available, allow all requests (fail open)
+  if (!redis) {
+    return {
+      allowed: true,
+      remaining: config.max,
+      reset: now + config.window * 1000,
+    }
+  }
+
   try {
     // Get current count
     const count = await redis.zcount(key, windowStart, now)
