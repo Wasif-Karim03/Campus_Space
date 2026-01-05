@@ -192,7 +192,7 @@ export default function CalendarPage() {
     return rooms.filter((room) => selectedRoomIds.includes(room.id))
   }, [rooms, selectedRoomIds])
 
-  const handleBookingClick = (booking: Booking, event: React.MouseEvent) => {
+  const handleBookingClick = (booking: { id: string; roomId: string; startAt: Date | string; endAt: Date | string; purpose: string; status: "APPROVED" | "PENDING"; user: { id?: string; name: string; email: string } }, event: React.MouseEvent) => {
     setSelectedBooking(booking)
     setPopoverPosition({
       x: event.clientX,

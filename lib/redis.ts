@@ -25,7 +25,7 @@ export const redis =
     
     // Performance settings
     enableOfflineQueue: false,          // Don't queue when disconnected
-    lazyConnect: false,
+    lazyConnect: true,                  // Don't connect immediately (important for Vercel builds)
     
     // Memory optimization
     maxmemory: "256mb",

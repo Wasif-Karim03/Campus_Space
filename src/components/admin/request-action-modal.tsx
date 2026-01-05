@@ -12,7 +12,7 @@ interface RequestActionModalProps {
   isOpen: boolean
   onClose: () => void
   onSubmit: (data: {
-    status: "APPROVED" | "REJECTED"
+    status: "REJECTED"
     reason: string
     startAt?: Date
     endAt?: Date
@@ -32,7 +32,7 @@ interface RequestActionModalProps {
       email: string
     }
   }
-  action: "approve" | "reject"
+  action: "reject"
 }
 
 export function RequestActionModal({

@@ -14,6 +14,7 @@ import { stringifyJsonField, transformRoom } from "@/lib/json-utils"
 import { cacheService } from "@/src/lib/cache.service"
 import { CacheKeys } from "@/src/lib/cache-keys"
 import { checkRateLimit, getClientIdentifier, RateLimits } from "@/src/lib/rate-limit"
+import { sanitizeString } from "@/src/lib/utils/sanitize"
 
 export async function PUT(
   request: NextRequest,
@@ -164,7 +165,7 @@ export async function DELETE(
     await cacheService.invalidate("rooms:list:*")
     await cacheService.invalidate(`availability:${id}:*`) // Invalidate all availability caches for this room
     // Invalidate buildings cache (room count changed)
-    await cacheService.del(CacheKeys.buildings())
+    await cacheService.delete(CacheKeys.buildings())
 
     const response = NextResponse.json(successResponse(room))
     

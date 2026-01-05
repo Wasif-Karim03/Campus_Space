@@ -26,7 +26,9 @@ export async function POST(request: NextRequest) {
     const validationResult = sendCodeSchema.safeParse(body)
     if (!validationResult.success) {
       const error = handleValidationError(validationResult.error)
-      if (error) return error
+      if (error && !error.success) {
+        return NextResponse.json(error, { status: error.statusCode || 400 })
+      }
       return NextResponse.json(errorResponse("Validation failed", 400), { status: 400 })
     }
     

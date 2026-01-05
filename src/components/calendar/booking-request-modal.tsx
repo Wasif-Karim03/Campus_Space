@@ -201,6 +201,7 @@ export function BookingRequestModal({
             </form>
           </motion.div>
         </div>
+        </>
       )}
     </AnimatePresence>
   )
