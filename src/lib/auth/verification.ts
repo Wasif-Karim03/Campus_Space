@@ -32,8 +32,8 @@ export async function storeVerificationCode(
   const value = JSON.stringify({ code, role, email, createdAt: Date.now() })
   
   try {
-    // Try Redis with timeout (only if Redis is configured)
-    if (process.env.REDIS_HOST && process.env.REDIS_HOST !== "localhost") {
+    // Try Redis with timeout (only if Redis is configured and available)
+    if (redis) {
       await Promise.race([
         redis.setex(key, CODE_EXPIRY_SECONDS, value),
         new Promise((_, reject) => 
@@ -68,17 +68,19 @@ export async function verifyCode(
   const key = `${CODE_KEY_PREFIX}${email}`
   
   try {
-    // Try Redis first with timeout
+    // Try Redis first with timeout (only if Redis is available)
     let data: string | null = null
-    try {
-      data = await Promise.race([
-        redis.get(key),
-        new Promise<string | null>((resolve) => 
-          setTimeout(() => resolve(null), 1000)
-        )
-      ]) as string | null
-    } catch (error) {
-      // Fallback to in-memory storage
+    if (redis) {
+      try {
+        data = await Promise.race([
+          redis.get(key),
+          new Promise<string | null>((resolve) => 
+            setTimeout(() => resolve(null), 500)
+          )
+        ]) as string | null
+      } catch (error) {
+        // Fallback to in-memory storage
+      }
     }
     
     // If Redis didn't return data, check memory store
@@ -103,10 +105,14 @@ export async function verifyCode(
     }
     
     // Code is valid, delete it (one-time use)
-    try {
-      await redis.del(key)
-    } catch (error) {
-      // Fallback: remove from memory store
+    if (redis) {
+      try {
+        await redis.del(key)
+      } catch (error) {
+        // Fallback: remove from memory store
+        memoryStore.delete(key)
+      }
+    } else {
       memoryStore.delete(key)
     }
     
@@ -125,13 +131,16 @@ export async function verifyCode(
  */
 export async function hasPendingCode(email: string): Promise<boolean> {
   const key = `${CODE_KEY_PREFIX}${email}`
-  try {
-    const exists = await redis.exists(key)
-    return exists === 1
-  } catch (error) {
-    // Fallback to memory store
-    const memoryEntry = memoryStore.get(key)
-    return memoryEntry ? memoryEntry.expires > Date.now() : false
+  if (redis) {
+    try {
+      const exists = await redis.exists(key)
+      return exists === 1
+    } catch (error) {
+      // Fallback to memory store
+    }
   }
+  // Use memory store
+  const memoryEntry = memoryStore.get(key)
+  return memoryEntry ? memoryEntry.expires > Date.now() : false
 }
 
