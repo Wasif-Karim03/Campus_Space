@@ -29,7 +29,7 @@ export function formatValidationErrors(error: ZodError): {
 
   return {
     message: generalMessage,
-    fields: Object.keys(fields).length > 0 ? fields : undefined,
+    fields: Object.keys(fields).length > 0 ? fields : {},
   }
 }
 

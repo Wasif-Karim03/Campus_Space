@@ -94,7 +94,7 @@ interface TabsContentProps extends React.HTMLAttributes<HTMLDivElement> {
   value: string
 }
 
-function TabsContent({ value, className, children, ...props }: TabsContentProps) {
+function TabsContent({ value, className, children, onDrag, onDragStart, onDragEnd, ...props }: TabsContentProps) {
   const { value: selectedValue } = useTabsContext()
   const isSelected = selectedValue === value
 
@@ -111,7 +111,7 @@ function TabsContent({ value, className, children, ...props }: TabsContentProps)
         "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         className
       )}
-      {...props}
+      {...(props as any)}
     >
       {children}
     </motion.div>
