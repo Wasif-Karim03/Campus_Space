@@ -46,6 +46,9 @@ function createTransporter() {
       user: email,
       pass: password, // Gmail App Password (not regular password)
     },
+    connectionTimeout: 5000, // 5 second timeout
+    greetingTimeout: 5000,   // 5 second timeout
+    socketTimeout: 5000,     // 5 second timeout
   })
 }
 

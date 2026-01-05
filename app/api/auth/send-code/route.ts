@@ -40,12 +40,23 @@ export async function POST(request: NextRequest) {
     // Store code in Redis (10 minute expiry)
     await storeVerificationCode(email.toLowerCase(), role, code)
     
-    // Send email with code
+    // Send email with code (non-blocking with timeout)
     const emailSubject = "Your Room Booking Login Code"
     const emailBody = `Your verification code is: ${code}\n\nThis code will expire in 10 minutes.\n\nIf you didn't request this code, please ignore this email.`
     
-    await sendEmail(email, emailSubject, emailBody)
+    // Send email with 5-second timeout - don't block the response
+    Promise.race([
+      sendEmail(email, emailSubject, emailBody),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Email timeout")), 5000)
+      )
+    ]).catch((error) => {
+      // Log error but don't fail the request - code is already stored
+      console.error("Failed to send email (non-blocking):", error)
+      console.log("📧 Verification code:", code, "for", email)
+    })
     
+    // Return immediately - email will be sent in background
     return NextResponse.json(
       successResponse({ message: "Verification code sent to your email" }),
       { status: 200 }
